@@ -1,0 +1,89 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: selenium-hub
+  labels:
+    component: selenium-hub
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: selenium-hub
+    spec:
+      serviceAccount: selenium-hub
+      containers:
+      - name: selenium-hub
+        image: selenium/hub:2.47.1
+        ports:
+        - containerPort: 4444
+          name: http
+          protocol: TCP
+        resources:
+          limits:
+            memory: "1000Mi"
+            cpu: ".5"
+        livenessProbe:
+          httpGet:
+            path: /grid/console
+            port: 4444
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /grid/console
+            port: 4444
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: selenium-node-firefox
+  labels:
+    component: selenium-node-firefox
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: selenium-node-firefox
+    spec:
+      serviceAccount: selenium-node-firefox
+      containers:
+      - name: selenium-node-firefox
+        image: selenium/node-firefox:2.47.1
+        env:
+          - name: HUB_PORT_4444_TCP_ADDR
+            value: "selenium-hub"
+          - name: HUB_PORT_4444_TCP_PORT
+            value: "4444"
+        resources:
+          limits:
+            memory: "1000Mi"
+            cpu: ".5"
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: selenium-hub
+  labels:
+    component: selenium-hub
+spec:
+  type: LoadBalancer
+  selector:
+    component: selenium-hub
+  ports:
+  - name: http
+    port: 4444
+    protocol: TCP
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: selenium-hub
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: selenium-node-firefox
