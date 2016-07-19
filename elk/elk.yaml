@@ -1,0 +1,73 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: elasticsearch
+  labels:
+    component: elasticsearch
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: elk
+    spec:
+      serviceAccount: elk
+      containers:
+      - name: elasticsearch
+        image: elasticsearch:2.3.2
+        ports:
+        - containerPort: 9200
+          name: http
+          protocol: TCP
+        - containerPort: 9300
+          name: transport
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9200
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
+        volumeMounts:
+        - mountPath: /usr/share/elasticsearch/data
+          name: storage
+      - name: kibana
+        image: kibana:4.5.3
+        env:
+        - name: ELASTICSEARCH_URL
+          value: http://localhost:9200
+        ports:
+        - containerPort: 5601
+          name: http
+          protocol: TCP
+      volumes:
+      - name: storage
+        gcePersistentDisk:
+          pdName: elasticsearch
+          fsType: ext4
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: elk
+  labels:
+    component: elk
+spec:
+  type: LoadBalancer
+  selector:
+    component: elk
+  ports:
+  - name: http
+    port: 9200
+    protocol: TCP
+  - name: transport
+    port: 9300
+    protocol: TCP
+  - name: monitor
+    port: 5601
+    protocol: TCP
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: elk
