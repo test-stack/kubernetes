@@ -1,0 +1,22 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: harness
+  labels:
+    component: harness
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: harness
+    spec:
+      serviceAccount: harness
+      containers:
+      - name: harness
+        image: rdpanek/docker_harness:1.6
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: harness
