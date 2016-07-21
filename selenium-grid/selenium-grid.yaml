@@ -62,6 +62,13 @@ spec:
           limits:
             memory: "1000Mi"
             cpu: ".5"
+        volumeMounts:
+        - mountPath: /opt/selenium/
+          name: node-configuration
+      volumes:
+      - name: node-configuration
+        gitRepo:
+          repository: http://github.com/test-stack/docker.git
 ---
 kind: Service
 apiVersion: v1
